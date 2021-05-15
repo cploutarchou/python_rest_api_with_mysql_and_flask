@@ -12,11 +12,17 @@ def index():
 @app.route('/posts')
 def get_posts():
     output = []
-    for post in Posts.query.all():
+    posts = Posts.query.all()
+    if len(posts) == 0:
+        return jsonify({
+            'status_code': 204, 'error': 'No Content',
+            'description': "No any posts found."})
+
+    for post in posts:
         data = {'title': post.title, 'description': post.description}
         output.append(data)
 
-    return {'status_code': 200, "content": {'posts': output}, "items": len(output)}
+    return {'status_code': 200, "content": {'posts': output}, "total_items": len(output)}
 
 
 @app.route('/post/<post_id>', methods=['GET'])
