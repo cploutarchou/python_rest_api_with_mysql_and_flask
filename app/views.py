@@ -27,12 +27,12 @@ def get_post(post_id: str):
 
 # insert_drinks()
 @app.route('/posts', methods=['POST'])
-def create_drink():
-    post = Posts(title=request.json['name'], description=request.json['description'],
+def create_post():
+    post = Posts(title=request.json['title'], description=request.json['description'],
                  published=request.json['published'])
     db.session.add(post)
     db.session.commit()
-    return {'id': post.id}
+    return {'id': post.id, 'status': 200}
 
 
 @app.route('/posts/<id>', methods=['PUT'])
