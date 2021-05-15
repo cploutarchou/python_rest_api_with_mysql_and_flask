@@ -61,7 +61,15 @@ def create_post():
 @app.route('/post/<post_id>', methods=['PUT'])
 @app.route('/post/', methods=['PUT'])
 def update_post(post_id=None):
-    if request.json is not None:
+    if not request.json:
+        return jsonify({
+            'status_code': 204, 'Error': 'No Content',
+            'Error Description': "No Content."})
+    elif post_id is None:
+        return jsonify({
+            'status_code': 400, 'Error': 'Bad Request',
+            'Error Description': "Post id is required."})
+    else:
         post = Posts.query.filter_by(id=post_id).first()
         if post is None:
             return jsonify({
@@ -73,8 +81,3 @@ def update_post(post_id=None):
             post.item = request.json[item]
             db.session.commit()
         return {'id': post.id, 'status_code': 200, "description": f"Post id : {post.id} successfully updated."}
-    # TODO : Update method error if content not found
-    elif request.json is None or len(request.json) == 0:
-        return jsonify({
-            'status_code': 204, 'Error': 'No Content',
-            'Error Description': "No Content."})
