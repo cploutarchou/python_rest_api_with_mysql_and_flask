@@ -33,3 +33,17 @@ def create_drink():
     db.session.add(post)
     db.session.commit()
     return {'id': post.id}
+
+
+@app.route('/posts/<id>', methods=['PUT'])
+def update_post():
+    if id not in request.json:
+        return "Unable to update post. Post id is required."
+    else:
+        post = Posts.query.filter_by(id=request.json['id']).first()
+        for item in request.json:
+            if item == 'id':
+                continue
+            post.item = request.json[item]
+            db.session.commit()
+    return {'id': post.id, 'status': 200}
