@@ -38,17 +38,24 @@ def get_post(post_id=None):
     return jsonify({
         'status_code': 200,
         'content': {'id': post.id, 'description': post.description},
-        "message": f""
+        "description": f""
     })
 
 
 @app.route('/posts', methods=['POST'])
 def create_post():
     post = Posts(title=request.json['title'], description=request.json['description'],
-                 published=request.json['published'])
+                 published=request.json['published'], publisher=request.json['publisher'])
     db.session.add(post)
     db.session.commit()
-    return {'id': post.id, 'status_code': 200, "message": f"Post id : {post.id} successfully created."}
+
+    if post.id is None:
+        return jsonify({
+            'status_code': 408, 'error': 'Request Timeout',
+            'description': "Something going wrong . Please try again."})
+
+    return {'id': post.id, 'status_code': 201, 'status': 'created',
+            "description": f"Post with id {post.id} successfully created."}
 
 
 @app.route('/posts/<post_id>', methods=['PUT'])
@@ -62,4 +69,4 @@ def update_post(post_id=None):
                 continue
             post.item = request.json[item]
             db.session.commit()
-    return {'id': post.id, 'status_code': 200, "message": f"Post id : {post.id} successfully updated."}
+    return {'id': post.id, 'status_code': 200, "description": f"Post id : {post.id} successfully updated."}
