@@ -137,21 +137,29 @@ def delete_post(post_id=None):
         }
 
     if post_id:
-        post = Posts.query.filter_by(id=post_id).first()
-        if post is None:
+        try:
+            post = Posts.query.filter_by(id=post_id).first()
+            if post is None:
+                return {
+                    'status_code': 400,
+                    'Error': 'Bad Request',
+                    'Error Description': "Not valid post id."
+                }
+            db.session.delete(post)
+            db.session.commit()
+            return {
+                'id': post.id,
+                'status_code': 200,
+                'status': 'delete',
+                "description": f"Post id {post.id} successfully deleted."
+            }
+        except InternalError:
+            db.session.rollback()
             return {
                 'status_code': 400,
-                'Error': 'Bad Request',
-                'Error Description': "Not valid post id."
+                'status': 'Bad Request',
+                "description": f"Something going wrong. Error: {InternalError}",
             }
-        db.session.delete(post)
-        db.session.commit()
-        return {
-            'id': post.id,
-            'status_code': 200,
-            'status': 'delete',
-            "description": f"Post id {post.id} successfully deleted."
-        }
 
 
 @app.route('/posts/delete_all', methods=['DELETE'])
@@ -159,6 +167,12 @@ def delete_all_posts():
     try:
         num_rows_deleted = db.session.query(Posts).delete()
         db.session.commit()
+        return {
+            'status_code': 200,
+            'status': 'delete',
+            "description": f"All posts successfully deleted.",
+            "Deleted num_rows_deleted": num_rows_deleted
+        }
     except InternalError:
         db.session.rollback()
         return {
@@ -166,9 +180,3 @@ def delete_all_posts():
             'status': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
-    return {
-        'status_code': 200,
-        'status': 'delete',
-        "description": f"All posts successfully deleted.",
-        "Deleted num_rows_deleted": num_rows_deleted
-    }
