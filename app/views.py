@@ -107,24 +107,31 @@ def update_post(post_id=None):
 
 @app.route('/users', methods=['POST'])
 def create_user():
-    user = Users(username=request.json['username'], email=request.json['email'], name=request.json['name'])
+    try:
+        user = Users(username=request.json['username'], email=request.json['email'], name=request.json['name'])
+        db.session.add(user)
+        db.session.commit()
 
-    db.session.add(user)
-    db.session.commit()
+        if user.id is None:
+            return {
+                'status_code': 408,
+                'error': 'Request Timeout',
+                'description': "Something going wrong .Unable to create new user. Please try again."
+            }
 
-    if user.id is None:
         return {
-            'status_code': 408,
-            'error': 'Request Timeout',
-            'description': "Something going wrong .Unable to create new user. Please try again."
+            'id': user.id,
+            'status_code': 201,
+            'status': 'created',
+            "description": f"User created successfully."
         }
-
-    return {
-        'id': user.id,
-        'status_code': 201,
-        'status': 'created',
-        "description": f"User created successfully."
-    }
+    except InternalError:
+        db.session.rollback()
+        return {
+            'status_code': 400,
+            'status': 'Bad Request',
+            "description": f"Something going wrong. Error: {InternalError}",
+        }
 
 
 @app.route('/posts/delete/<post_id>', methods=['DELETE'])
