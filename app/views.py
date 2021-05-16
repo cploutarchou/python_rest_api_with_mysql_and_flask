@@ -1,3 +1,4 @@
+from sqlalchemy.exc import InternalError
 from flask import request
 from app import app, db
 from app.models import Posts, Users
@@ -126,8 +127,7 @@ def create_user():
     }
 
 
-@app.route('/posts/<post_id>', methods=['DELETE'])
-@app.route('/posts/', methods=['DELETE'])
+@app.route('/posts/delete/<post_id>', methods=['DELETE'])
 def delete_post(post_id=None):
     if post_id is None:
         return {
@@ -144,13 +144,31 @@ def delete_post(post_id=None):
                 'Error': 'Bad Request',
                 'Error Description': "Not valid post id."
             }
-
         db.session.delete(post)
         db.session.commit()
-
         return {
             'id': post.id,
             'status_code': 200,
             'status': 'delete',
             "description": f"Post id {post.id} successfully deleted."
         }
+
+
+@app.route('/posts/delete_all', methods=['DELETE'])
+def delete_all_posts():
+    try:
+        num_rows_deleted = db.session.query(Posts).delete()
+        db.session.commit()
+    except InternalError:
+        db.session.rollback()
+        return {
+            'status_code': 400,
+            'status': 'Bad Request',
+            "description": f"Something going wrong. Error: {InternalError}",
+        }
+    return {
+        'status_code': 200,
+        'status': 'delete',
+        "description": f"All posts successfully deleted.",
+        "Deleted num_rows_deleted": num_rows_deleted
+    }
