@@ -36,7 +36,7 @@ def get_posts():
 @app.route('/posts/<post_id>', methods=['GET'])
 @app.route('/posts/', methods=['GET'])
 def get_post(post_id=None):
-    user = None
+    full_name = ""
     if post_id is None:
         return {
             'status_code': 400, 'Error': 'Bad Request',
@@ -46,6 +46,8 @@ def get_post(post_id=None):
         post = Posts.query.filter_by(id=post_id).first()
         if post.publisher is not None:
             user = Users.query.filter_by(id=post.publisher).first()
+            if user is not None:
+                full_name = user.name
         if post is None:
             return {
                 'status_code': 200,
@@ -57,7 +59,7 @@ def get_post(post_id=None):
             'content': {
                 'id': post.id,
                 'description': post.description,
-                'publisher': f"{user.name}"}
+                'publisher': f"{full_name}"}
         }
     except InternalError:
         db.session.rollback()
