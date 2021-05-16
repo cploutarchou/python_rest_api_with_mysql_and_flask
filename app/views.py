@@ -1,7 +1,8 @@
 from flask import render_template, request, jsonify
+from sqlalchemy.orm import relationship
 
 from app import app, db
-from app.models import Posts
+from app.models import Posts, Users
 
 
 @app.route('/')
@@ -28,17 +29,23 @@ def get_posts():
 @app.route('/post/<post_id>', methods=['GET'])
 @app.route('/post/', methods=['GET'])
 def get_post(post_id=None):
-    if request.json is None:
+    user = None
+    if post_id is None:
         return jsonify({
             'status_code': 400, 'Error': 'Bad Request',
             'Error Description': "Post id is required."})
     post = Posts.query.filter_by(id=post_id).first()
+    if post.publisher is not None:
+        user = Users.query.filter_by(id=post.publisher).first()
     if post is None:
         return jsonify({'status_code': 200, 'Error': "NO VALID POST ID."})
+
     return jsonify({
         'status_code': 200,
-        'content': {'id': post.id, 'description': post.description},
-        "description": f""
+        'content': {
+            'id': post.id,
+            'description': post.description,
+            'publisher': f"{user.full_name}"}
     })
 
 
@@ -81,3 +88,23 @@ def update_post(post_id=None):
             post.item = request.json[item]
             db.session.commit()
         return {'id': post.id, 'status_code': 200, "description": f"Post id : {post.id} successfully updated."}
+
+
+@app.route('/users', methods=['POST'])
+def create_user():
+    user = Users(username=request.json['username'], email=request.json['email'], name=request.json['name'])
+
+    db.session.add(user)
+    db.session.commit()
+
+    if user.id is None:
+        return jsonify({
+            'status_code': 408, 'error': 'Request Timeout',
+            'description': "Something going wrong .Unable to create new user. Please try again."})
+
+    return {
+        'id': user.id,
+        'status_code': 201,
+        'status': 'created',
+        "description": f"User created successfully."
+    }
