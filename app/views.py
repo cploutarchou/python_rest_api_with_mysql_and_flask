@@ -11,7 +11,8 @@ def get_posts():
         posts = Posts.query.all()
         if len(posts) == 0:
             return {
-                'status_code': 204, 'error': 'No Content',
+                'status_code': 204,
+                'status_msg': 'No Content',
                 'description': "No any posts found."
             }
 
@@ -21,6 +22,7 @@ def get_posts():
 
         return {
             'status_code': 200,
+            'status_msg': "200",
             "content": {'posts': output},
             "total_items": len(output)
         }
@@ -28,7 +30,7 @@ def get_posts():
         db.session.rollback()
         return {
             'status_code': 400,
-            'status': 'Bad Request',
+            'status_msg': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
 
@@ -39,8 +41,9 @@ def get_post(post_id=None):
     full_name = ""
     if post_id is None:
         return {
-            'status_code': 400, 'Error': 'Bad Request',
-            'Error Description': "Post id is required."
+            'status_code': 400,
+            'status_msg': 'Bad Request',
+            'description': "Post id is required."
         }
     try:
         post = Posts.query.filter_by(id=post_id).first()
@@ -51,11 +54,13 @@ def get_post(post_id=None):
         if post is None:
             return {
                 'status_code': 200,
-                'Error': "NO VALID POST ID."
+                'status_msg': "NO VALID POST ID.",
+                'description': "NO VALID POST ID."
             }
 
         return {
             'status_code': 200,
+            'status_msg': "",
             'content': {
                 'id': post.id,
                 'description': post.description,
@@ -65,7 +70,7 @@ def get_post(post_id=None):
         db.session.rollback()
         return {
             'status_code': 400,
-            'status': 'Bad Request',
+            'status_msg': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
 
@@ -80,21 +85,22 @@ def create_post():
 
         if post.id is None:
             return {
-                'status_code': 408, 'error': 'Request Timeout',
+                'status_code': 408,
+                'status_msg': 'Request Timeout',
                 'description': "Something going wrong . Please try again."
             }
 
         return {
             'id': post.id,
             'status_code': 201,
-            'status': 'created',
+            'status_msg': 'created',
             "description": f"Post with id {post.id} successfully created."
         }
     except InternalError:
         db.session.rollback()
         return {
             'status_code': 400,
-            'status': 'Bad Request',
+            'status_msg': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
 
@@ -104,21 +110,24 @@ def create_post():
 def update_post(post_id=None):
     if not request.json:
         return {
-            'status_code': 204, 'Error': 'No Content',
-            'Error Description': "No Content."
+            'status_code': 204,
+            'status_msg': 'No Content',
+            'description': "No Content."
         }
     elif post_id is None:
         return {
-            'status_code': 400, 'Error': 'Bad Request',
-            'Error Description': "Post id is required."
+            'status_code': 400,
+            'status_msg': 'Bad Request',
+            'description': "Post id is required."
         }
     else:
         try:
             post = Posts.query.filter_by(id=post_id).first()
             if post is None:
                 return {
-                    'status_code': 400, 'Error': 'Bad Request',
-                    'Error Description': f"Unable to find post with id {post_id}"
+                    'status_code': 400,
+                    'status_msg': 'Bad Request',
+                    'description': f"Unable to find post with id {post_id}"
                 }
             for item in request.json:
                 if item == 'id':
@@ -128,13 +137,14 @@ def update_post(post_id=None):
             return {
                 'id': post.id,
                 'status_code': 200,
+                'status_msg': "200",
                 "description": f"Post id : {post.id} successfully updated."
             }
         except InternalError:
             db.session.rollback()
             return {
                 'status_code': 400,
-                'status': 'Bad Request',
+                'status_msg': 'Bad Request',
                 "description": f"Something going wrong. Error: {InternalError}",
             }
 
@@ -149,21 +159,21 @@ def create_user():
         if user.id is None:
             return {
                 'status_code': 408,
-                'error': 'Request Timeout',
+                'status_msg': 'Request Timeout',
                 'description': "Something going wrong .Unable to create new user. Please try again."
             }
 
         return {
             'id': user.id,
             'status_code': 201,
-            'status': 'created',
+            'status_msg': 'created',
             "description": f"User created successfully."
         }
     except InternalError:
         db.session.rollback()
         return {
             'status_code': 400,
-            'status': 'Bad Request',
+            'status_msg': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
 
@@ -173,8 +183,8 @@ def delete_post(post_id=None):
     if post_id is None:
         return {
             'status_code': 400,
-            'Error': 'Bad Request',
-            'Error Description': "Post id is required."
+            'status_msg': 'Bad Request',
+            'description': "Post id is required."
         }
 
     if post_id:
@@ -183,22 +193,22 @@ def delete_post(post_id=None):
             if post is None:
                 return {
                     'status_code': 400,
-                    'Error': 'Bad Request',
-                    'Error Description': "Not valid post id."
+                    'status_msg': 'Bad Request',
+                    'description': "Not valid post id."
                 }
             db.session.delete(post)
             db.session.commit()
             return {
                 'id': post.id,
                 'status_code': 200,
-                'status': 'delete',
+                'status_msg': 'delete',
                 "description": f"Post id {post.id} successfully deleted."
             }
         except InternalError:
             db.session.rollback()
             return {
                 'status_code': 400,
-                'status': 'Bad Request',
+                'status_msg': 'Bad Request',
                 "description": f"Something going wrong. Error: {InternalError}",
             }
 
@@ -210,14 +220,14 @@ def delete_all_posts():
         db.session.commit()
         return {
             'status_code': 200,
-            'status': 'delete',
+            'status_msg': 'delete',
             "description": f"All posts successfully deleted.",
-            "Deleted num_rows_deleted": num_rows_deleted
+            "Num of deleted rows": num_rows_deleted
         }
     except InternalError:
         db.session.rollback()
         return {
             'status_code': 400,
-            'status': 'Bad Request',
+            'status_msg': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
