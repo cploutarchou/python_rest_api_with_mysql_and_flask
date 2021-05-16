@@ -72,8 +72,8 @@ def create_post():
     }
 
 
-@app.route('/post/<post_id>', methods=['PUT'])
-@app.route('/post/', methods=['PUT'])
+@app.route('/posts/<post_id>', methods=['PUT'])
+@app.route('/posts/', methods=['PUT'])
 def update_post(post_id=None):
     if not request.json:
         return {
@@ -124,3 +124,33 @@ def create_user():
         'status': 'created',
         "description": f"User created successfully."
     }
+
+
+@app.route('/posts/<post_id>', methods=['DELETE'])
+@app.route('/posts/', methods=['DELETE'])
+def delete_post(post_id=None):
+    if post_id is None:
+        return {
+            'status_code': 400,
+            'Error': 'Bad Request',
+            'Error Description': "Post id is required."
+        }
+
+    if post_id:
+        post = Posts.query.filter_by(id=post_id).first()
+        if post is None:
+            return {
+                'status_code': 400,
+                'Error': 'Bad Request',
+                'Error Description': "Not valid post id."
+            }
+
+        db.session.delete(post)
+        db.session.commit()
+
+        return {
+            'id': post.id,
+            'status_code': 200,
+            'status': 'delete',
+            "description": f"Post id {post.id} successfully deleted."
+        }
