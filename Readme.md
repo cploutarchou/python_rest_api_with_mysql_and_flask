@@ -32,3 +32,6 @@ __________________________________
 * FLASK_APP = app.py
 * FLASK_ENV = development
 * FLASK_DEBUG = 1
+
+
+ You can download the postman collection with all API calls on the following  [URL](https://www.getpostman.com/collections/cad81248502ec45e3e70).
