@@ -231,3 +231,34 @@ def delete_all_posts():
             'status_msg': 'Bad Request',
             "description": f"Something going wrong. Error: {InternalError}",
         }
+
+
+@app.route('/posts/published')
+def get_published_posts():
+    try:
+        output = []
+        posts = Posts.query.filter(Posts.published == True).all()
+        if len(posts) == 0:
+            return {
+                'status_code': 204,
+                'status_msg': 'No Content',
+                'description': "No any posts found."
+            }
+
+        for post in posts:
+            data = {'title': post.title, 'description': post.description}
+            output.append(data)
+
+        return {
+            'status_code': 200,
+            'status_msg': "OK",
+            "content": {'posts': output},
+            "total_items": len(output)
+        }
+    except InternalError:
+        db.session.rollback()
+        return {
+            'status_code': 400,
+            'status_msg': 'Bad Request',
+            "description": f"Something going wrong. Error: {InternalError}",
+        }
