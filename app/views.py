@@ -6,9 +6,14 @@ from app.models import Posts, Users
 
 @app.route('/posts')
 def get_posts():
+    search = request.args.get('title', None)
+    search = f"%{search}%"
     try:
         output = []
-        posts = Posts.query.all()
+        if search is not None:
+            posts = Posts.query.filter(Posts.title.like(search)).all()
+        else:
+            posts = Posts.query.all()
         if len(posts) == 0:
             return {
                 'status_code': 204,
@@ -22,7 +27,7 @@ def get_posts():
 
         return {
             'status_code': 200,
-            'status_msg': "200",
+            'status_msg': "OK",
             "content": {'posts': output},
             "total_items": len(output)
         }
@@ -36,7 +41,6 @@ def get_posts():
 
 
 @app.route('/posts/<post_id>', methods=['GET'])
-@app.route('/posts/', methods=['GET'])
 def get_post(post_id=None):
     full_name = ""
     if post_id is None:
@@ -54,13 +58,13 @@ def get_post(post_id=None):
         if post is None:
             return {
                 'status_code': 200,
-                'status_msg': "NO VALID POST ID.",
-                'description': "NO VALID POST ID."
+                'status_msg': "OK",
+                'description': "No valid post found."
             }
 
         return {
             'status_code': 200,
-            'status_msg': "",
+            'status_msg': "OK",
             'content': {
                 'id': post.id,
                 'description': post.description,
@@ -78,8 +82,12 @@ def get_post(post_id=None):
 @app.route('/posts', methods=['POST'])
 def create_post():
     try:
-        post = Posts(title=request.json['title'], description=request.json['description'],
-                     published=request.json['published'], publisher=request.json['publisher'])
+        post = Posts(
+            title=request.json['title'],
+            description=request.json['description'],
+            published=request.json['published'],
+            publisher=request.json['publisher']
+        )
         db.session.add(post)
         db.session.commit()
 
@@ -96,6 +104,7 @@ def create_post():
             'status_msg': 'created',
             "description": f"Post with id {post.id} successfully created."
         }
+
     except InternalError:
         db.session.rollback()
         return {
@@ -106,7 +115,6 @@ def create_post():
 
 
 @app.route('/posts/<post_id>', methods=['PUT'])
-@app.route('/posts/', methods=['PUT'])
 def update_post(post_id=None):
     if not request.json:
         return {
@@ -125,8 +133,8 @@ def update_post(post_id=None):
             post = Posts.query.filter_by(id=post_id).first()
             if post is None:
                 return {
-                    'status_code': 400,
-                    'status_msg': 'Bad Request',
+                    'status_code': 204,
+                    'status_msg': 'No Content',
                     'description': f"Unable to find post with id {post_id}"
                 }
             for item in request.json:
@@ -152,23 +160,21 @@ def update_post(post_id=None):
 @app.route('/users', methods=['POST'])
 def create_user():
     try:
-        user = Users(username=request.json['username'], email=request.json['email'], name=request.json['name'])
+        user = Users(
+            username=request.json['username'],
+            email=request.json['email'],
+            name=request.json['name']
+        )
         db.session.add(user)
         db.session.commit()
 
-        if user.id is None:
+        if user.id:
             return {
-                'status_code': 408,
-                'status_msg': 'Request Timeout',
-                'description': "Something going wrong .Unable to create new user. Please try again."
+                'id': user.id,
+                'status_code': 201,
+                'status_msg': 'created',
+                "description": f"User created successfully."
             }
-
-        return {
-            'id': user.id,
-            'status_code': 201,
-            'status_msg': 'created',
-            "description": f"User created successfully."
-        }
     except InternalError:
         db.session.rollback()
         return {
@@ -186,8 +192,7 @@ def delete_post(post_id=None):
             'status_msg': 'Bad Request',
             'description': "Post id is required."
         }
-
-    if post_id:
+    else:
         try:
             post = Posts.query.filter_by(id=post_id).first()
             if post is None:
@@ -233,11 +238,11 @@ def delete_all_posts():
         }
 
 
-@app.route('/posts/published')
+@app.route('/posts/published', methods=['GET'])
 def get_published_posts():
     try:
         output = []
-        posts = Posts.query.filter(Posts.published == True).all()
+        posts = Posts.query.filter(Posts.published).all()
         if len(posts) == 0:
             return {
                 'status_code': 204,
